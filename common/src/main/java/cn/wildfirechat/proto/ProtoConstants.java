@@ -8,7 +8,7 @@ public class ProtoConstants {
         int ConversationType_Group = 1;
         int ConversationType_ChatRoom = 2;
         int ConversationType_Channel = 3;
-        int ConversationType_Thing = 4;
+        int ConversationType_Things = 4;
     }
 
     //message GroupInfo -> type
@@ -46,7 +46,7 @@ public class ProtoConstants {
         int Platform_OSX = 4;
         int Platform_WEB = 5;
         int Platform_WX = 6;
-        int Platform_Linux = 7;
+        int Platform_LINUX = 7;
     }
 
     //message NotifyMessage & PullMessageRequest -> type
@@ -181,5 +181,6 @@ public class ProtoConstants {
     public static final int MESSAGE_CONTENT_TYPE_CHANGE_SEARCHABLE = 116;
 
     public static final int MESSAGE_CONTENT_TYPE_SET_MANAGER = 117;
+    public static final int MESSAGE_CONTENT_TYPE_MUTE_MEMBER = 118;
 }
 

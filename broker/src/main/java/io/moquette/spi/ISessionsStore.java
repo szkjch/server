@@ -148,7 +148,10 @@ public interface ISessionsStore {
      */
     int getSecondPhaseAckPendingMessages(String clientID);
 
+    void disableSession(String clientId);
     void cleanSession(String clientID);
 
     boolean isMultiEndpointSupported();
+
+    ErrorCode kickoffPCClient(String operator, String pcClientId);
 }

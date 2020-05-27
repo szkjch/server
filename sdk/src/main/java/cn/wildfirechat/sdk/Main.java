@@ -6,6 +6,7 @@ import cn.wildfirechat.proto.ProtoConstants;
 import cn.wildfirechat.sdk.model.IMResult;
 import cn.wildfirechat.sdk.utilities.AdminHttpUtils;
 import cn.wildfirechat.sdk.utilities.RobotHttpUtils;
+import io.netty.util.internal.StringUtil;
 
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public class Main {
         testChatroom();
         testMessage();
         testGeneralApi();
+        testDevice();
 
         System.out.println("Congratulation, all admin test case passed!!!!!!!");
     }
@@ -72,6 +74,8 @@ public class Main {
             System.out.println("Create robot failure");
             System.exit(-1);
         }
+
+
 
         IMResult<InputOutputUserInfo> resultGetUserInfo1 = UserAdmin.getUserByName(userInfo.getName());
         if (resultGetUserInfo1 != null && resultGetUserInfo1.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
@@ -348,7 +352,7 @@ public class Main {
             System.exit(-1);
         }
 
-        voidIMResult = GroupAdmin.modifyGroupInfo(groupInfo.getOwner(), groupInfo.getTarget_id(), ProtoConstants.ModifyGroupInfoType.Modify_Group_Name,"HelloWorld", null);
+        voidIMResult = GroupAdmin.modifyGroupInfo(groupInfo.getOwner(), groupInfo.getTarget_id(), ProtoConstants.ModifyGroupInfoType.Modify_Group_Name,"HelloWorld", null, null);
         if (voidIMResult != null && voidIMResult.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
             System.out.println("transfer success");
         } else {
@@ -410,6 +414,23 @@ public class Main {
             System.exit(-1);
         }
 
+        voidIMResult = GroupAdmin.muteGroupMemeber("user1", groupInfo.getTarget_id(), Arrays.asList("user4", "user5"), true, null, null);
+        if (voidIMResult != null && voidIMResult.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
+            System.out.println("mute group member success");
+        } else {
+            System.out.println("mute group member failure");
+            System.exit(-1);
+        }
+
+        voidIMResult = GroupAdmin.muteGroupMemeber("user1", groupInfo.getTarget_id(), Arrays.asList("user4", "user5"), false, null, null);
+        if (voidIMResult != null && voidIMResult.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
+            System.out.println("unmute group member success");
+        } else {
+            System.out.println("unmute group member failure");
+            System.exit(-1);
+        }
+
+
 
         voidIMResult = GroupAdmin.quitGroup("user4", groupInfo.getTarget_id(), null, null);
         if (voidIMResult != null && voidIMResult.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
@@ -462,6 +483,13 @@ public class Main {
             System.exit(-1);
         }
 
+        voidIMResult = MessageAdmin.deleteMessage(resultSendMessage.getResult().getMessageUid());
+        if (voidIMResult != null && voidIMResult.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
+            System.out.println("delete message success");
+        } else {
+            System.out.println("delete message failure");
+            System.exit(-1);
+        }
 
         IMResult<BroadMessageResult> resultBroadcastMessage = MessageAdmin.broadcastMessage("user1", 0, payload);
         if (resultBroadcastMessage != null && resultBroadcastMessage.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
@@ -854,6 +882,50 @@ public class Main {
             System.out.println("destroy user success");
         } else {
             System.out.println("destroy user failure");
+            System.exit(-1);
+        }
+    }
+
+    //***********************************************
+    //****  物联网相关的API，仅专业版支持
+    //***********************************************
+    static void testDevice() throws Exception {
+        InputCreateDevice createDevice = new InputCreateDevice();
+        createDevice.setDeviceId("deviceId1");
+        createDevice.setOwners(Arrays.asList("opoGoG__", "userId1"));
+        IMResult<OutputCreateDevice> resultCreateDevice = UserAdmin.createOrUpdateDevice(createDevice);
+        if (resultCreateDevice != null && resultCreateDevice.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
+            System.out.println("Create device " + resultCreateDevice.getResult().getDeviceId() + " success");
+        } else {
+            System.out.println("Create device failure");
+            System.exit(-1);
+        }
+
+        IMResult<OutputDevice> getDevice = UserAdmin.getDevice("deviceId1");
+        if (getDevice != null && getDevice.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS && getDevice.getResult().getDeviceId().equals("deviceId1") && getDevice.getResult().getOwners().contains("opoGoG__")) {
+            System.out.println("Get device " + resultCreateDevice.getResult().getDeviceId() + " success");
+        } else {
+            System.out.println("Get device failure");
+            System.exit(-1);
+        }
+
+        IMResult<OutputDeviceList> getUserDevices = UserAdmin.getUserDevices("userId1");
+        if (getUserDevices != null && getUserDevices.getErrorCode() == ErrorCode.ERROR_CODE_SUCCESS) {
+            boolean success = false;
+            for (OutputDevice outputDevice : getUserDevices.getResult().getDevices()) {
+                if (outputDevice.getDeviceId().equals("deviceId1")) {
+                    success = true;
+                    break;
+                }
+            }
+            if (success) {
+                System.out.println("Get user device success");
+            } else {
+                System.out.println("Get user device failure");
+                System.exit(-1);
+            }
+        } else {
+            System.out.println("Get device failure");
             System.exit(-1);
         }
     }

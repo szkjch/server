@@ -219,6 +219,12 @@ public class MemoryMessagesStore implements IMessagesStore {
             Utility.printExecption(LOG, e);
             printMissConfigLog(CHATROOM_Participant_Idle_Time, mChatroomParticipantIdleTime + "");
         }
+
+        try {
+            boolean disableRemoteMessageSearch = Boolean.parseBoolean(m_Server.getConfig().getProperty(BrokerConstants.MESSAGES_DISABLE_REMOTE_SEARCH, "false"));
+            databaseStore.setDisableRemoteMessageSearch(disableRemoteMessageSearch);
+        } catch (Exception e) {
+        }
     }
 
     private void printMissConfigLog(String config, String defaultValue) {
@@ -1591,7 +1597,7 @@ public class MemoryMessagesStore implements IMessagesStore {
             return;
         }
 
-        if (session.getPlatform() == Platform_Linux || session.getPlatform() == Platform_Windows || session.getPlatform() == Platform_OSX) {
+        if (session.getPlatform() == Platform_LINUX || session.getPlatform() == Platform_Windows || session.getPlatform() == Platform_OSX) {
             updateUserSettings(session.username, WFCMessage.ModifyUserSettingReq.newBuilder().setScope(kUserSettingPCOnline).setKey("PC").setValue(online ? (System.currentTimeMillis()  + "|"  + session.getPlatform() + "|" + session.getClientID() + "|" + session.getPhoneName()) : "").build());
         } else {
             String value = null;
@@ -1601,7 +1607,7 @@ public class MemoryMessagesStore implements IMessagesStore {
                 }
 
                 switch (s.getPlatform()) {
-                    case Platform_Linux:
+                    case Platform_LINUX:
                     case Platform_Windows:
                     case Platform_OSX:
                         value = System.currentTimeMillis() + "|" + s.getPlatform() + "|" + s.getClientID() + "|" + s.getPhoneName();
@@ -2140,6 +2146,25 @@ public class MemoryMessagesStore implements IMessagesStore {
     @Override
     public ErrorCode handleFriendRequest(String userId, WFCMessage.HandleFriendRequest request, WFCMessage.Message.Builder msgBuilder, long[] heads, boolean isAdmin) {
         HazelcastInstance hzInstance = m_Server.getHazelcastInstance();
+
+        if(request.getStatus() == ProtoConstants.FriendRequestStatus.RequestStatus_Accepted) {
+            MultiMap<String, FriendData> friendsMap = hzInstance.getMultiMap(USER_FRIENDS);
+
+            Collection<FriendData> friends = friendsMap.get(userId);
+            if (friends == null || friends.size() == 0) {
+                friends = loadFriend(friendsMap, userId);
+            }
+
+            for (FriendData fd : friends) {
+                if (fd.getFriendUid().equals(request.getTargetUid())) {
+                    if (fd.getState() == 0) {
+                        return ErrorCode.ERROR_CODE_ALREADY_FRIENDS;
+                    } else {
+                        break;
+                    }
+                }
+            }
+        }
 
         if (isAdmin) {
             MultiMap<String, FriendData> friendsMap = hzInstance.getMultiMap(USER_FRIENDS);
